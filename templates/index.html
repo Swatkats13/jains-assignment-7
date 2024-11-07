@@ -3,36 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Linear Regression Assumptions</title>
+    <title>Linear Regression with Hypothesis Testing and Confidence Intervals</title>
 </head>
 <body>
-    <h1>Interactive Linear Regression Assumptions</h1>
+    <h1>Interactive Linear Regression Analysis</h1>
 
-    <form method="POST">
+    <!-- Error Message -->
+    {% if error %}
+    <p style="color: red;"><strong>Error:</strong> {{ error }}</p>
+    {% endif %}
+
+    <!-- Data Generation Form -->
+    <form method="POST" action="/">
+        <input type="hidden" name="action" value="generate_data">
+        <h2>Data Generation Parameters</h2>
+        
         <label for="N">Sample Size (N):</label>
-        <input type="number" id="N" name="N" required><br>
+        <input type="number" id="N" name="N" required value="{{ N or '' }}"><br>
 
         <label for="mu">Mean (μ):</label>
-        <input type="number" step="any" id="mu" name="mu" required><br>
+        <input type="number" step="any" id="mu" name="mu" required value="{{ mu or '' }}"><br>
 
         <label for="sigma2">Variance (σ²):</label>
-        <input type="number" step="any" id="sigma2" name="sigma2" required><br>
+        <input type="number" step="any" id="sigma2" name="sigma2" required value="{{ sigma2 or '' }}"><br>
+
+        <label for="beta0">Intercept (β₀):</label>
+        <input type="number" step="any" id="beta0" name="beta0" value="{{ beta0 or '' }}"><br>
+
+        <label for="beta1">Slope (β₁):</label>
+        <input type="number" step="any" id="beta1" name="beta1" value="{{ beta1 or '' }}"><br>
 
         <label for="S">Number of Simulations (S):</label>
-        <input type="number" id="S" name="S" required><br>
+        <input type="number" id="S" name="S" required value="{{ S or '' }}"><br>
 
-        <button type="submit">Generate</button>
+        <button type="submit">Generate Data</button>
     </form>
 
-    {% if plot1 and plot2 %}
-        <h2>Generated Plot</h2>
-        <img src="{{ plot1 }}" alt="Regression Plot" style="width: 600px;">
-
-        <h2>Histogram of Slopes and Intercepts</h2>
-        <img src="{{ plot2 }}" alt="Histograms" style="width: 600px;">
-
-        <p>Proportion of slopes more extreme than calculated slope: {{ slope_extreme | round(2) }}</p>
-        <p>Proportion of intercepts more extreme than calculated intercept: {{ intercept_extreme | round(2) }}</p>
+    <!-- Generated Plot -->
+    {% if plot1 %}
+    <h2>Generated Plot</h2>
+    <img src="{{ plot1 }}" alt="Regression Plot" style="width: 600px;">
+    {% else %}
+    <p>No data generated yet.</p>
     {% endif %}
+
+    <!-- Histogram of Simulated Slopes and Intercepts -->
+    {% if plot2 %}
+    <h2>Histogram of Simulated Slopes and Intercepts</h2>
+    <img src="{{ plot2 }}" alt="Histogram Plot" style="width: 600px;">
+    {% endif %}
+
+    <!-- Hypothesis Testing Form -->
+    {% if plot1 %}
+    <form method="POST" action="/">
+        <input type="hidden" name="action" value="hypothesis_test">
+        <h2>Hypothesis Testing</h2>
+        
+        <label for="test_parameter">Parameter to Test:</label>
+        <select id="test_parameter" name="test_parameter">
+            <option value="slope" {% if test_parameter == 'slope' %}selected{% endif %}>Slope</option>
+            <option value="intercept" {% if test_parameter == 'intercept' %}selected{% endif %}>Intercept</option>
+        </select><br>
+    
+        <label for="null_value">Hypothesized Value (H0):</label>
+        <input type="number" step="any" id="null_value" name="null_value" required value="{{ null_value or '' }}"><br>
+    
+        <label for="test_type">Type of Test:</label>
+        <select id="test_type" name="test_type">
+            <option value="greater" {% if test_type == 'greater' %}selected{% endif %}>Greater than ( > )</option>
+            <option value="less" {% if test_type == 'less' %}selected{% endif %}>Less than ( < )</option>
+            <option value="not equal" {% if test_type == 'not equal' %}selected{% endif %}>Not equal to ( ≠ )</option>
+        </select><br>
+    
+        <button type="submit">Run Hypothesis Testing</button>
+    </form>
+    {% endif %}
+
+    <!-- Hypothesis Testing Results -->
+    {% if plot3 %}
+    <h2>Hypothesis Testing Results</h2>
+    <img src="{{ plot3 }}" alt="Hypothesis Test Plot" style="width: 600px;">
+    <p>Observed Value: {{ observed_value }}</p>
+    <p>p-value: {{ p_value }}</p>
+    {% if fun_message %}
+    <p><strong>Note:</strong> {{ fun_message }}</p>
+    {% endif %}
+    {% endif %}
+
+    <!-- Confidence Interval Form -->
+    {% if plot1 %}
+    <form action="/calculate_ci" method="POST">
+        <input type="hidden" name="action" value="calculate_ci">
+        <label for="ci_parameter">Parameter:</label>
+        <select name="ci_parameter" id="ci_parameter">
+            <option value="slope" {% if ci_parameter == 'slope' %}selected{% endif %}>Slope</option>
+            <option value="intercept" {% if ci_parameter == 'intercept' %}selected{% endif %}>Intercept</option>
+        </select>
+    
+        <label for="confidence_level">Confidence Level (%):</label>
+        <input type="number" name="confidence_level" id="confidence_level" value="{{ confidence_level or '95' }}" min="0" max="100" step="0.1" required>
+    
+        <input type="submit" value="Calculate Confidence Interval">
+    </form>
+
+    <!-- Confidence Interval Results -->
+    {% if ci_plot %}
+    <h2>Confidence Interval Plot</h2>
+    <img src="{{ ci_plot }}?{{ time.time() }}" alt="Confidence Interval Plot" style="width:600px;">
+
+    <p>{{ confidence_level }}% Confidence Interval for {{ ci_parameter | capitalize }}: [{{ ci_lower | round(4) }}, {{ ci_upper | round(4) }}]</p>
+    <p>Mean Estimate: {{ mean_estimate | round(4) }}</p>
+    <p>Confidence Interval Includes True Parameter: {{ 'Yes' if includes_true else 'No' }}</p>
+    {% else %}
+    <p>No confidence interval generated yet.</p>
+    {% endif %}
+    {% endif %}
+
 </body>
 </html>
