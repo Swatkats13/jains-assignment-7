@@ -87,7 +87,7 @@ def hypothesis_test(X, Y, parameter='slope', null_value=0, test_type='greater', 
     elif test_type == 'less':
         p_value = np.mean([sim <= observed_value for sim in simulated_values])
     else:  # 'not equal'
-        p_value = np.mean([abs(sim - observed_value) >= abs(observed_value) for sim in simulated_values])
+        p_value = np.mean([abs(sim - null_value) >= abs(null_value - observed_value) for sim in simulated_values])
 
     return observed_value, simulated_values, p_value
 
